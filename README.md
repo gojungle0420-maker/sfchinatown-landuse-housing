@@ -23,7 +23,7 @@ A Python-based geospatial data pipeline integrating parcel, land use, zoning, an
 ![차이나타운 분석 대상 6개 Census tract의 임차가구 비율을 보여주는 지도와 파란색 범례](results/chinatown-renter-share.svg)
 
 2020–2024년 ACS 추정치 기준, 6개 tract의 임차가구 비율은 80.45%에서 98.62%까지 분포합니다. 각 색은 해당 tract 전체의 거주 가구 중 임차가구가 차지하는 비율을 나타냅니다.
-
+지도 색은 2020–2024년 ACS 임차가구 비율 추정치를 나타냅니다. 6개 tract 중 107.02의 추정치가 80.45%로 가장 낮았지만, 90% 오차범위도 약 ±19.77%p로 가장 컸습니다. 따라서 지도에서 보이는 색 차이만으로 지역 간 임차 비율의 차이를 단정하기는 어렵습니다.
 
 ## 첫 실행
 

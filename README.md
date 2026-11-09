@@ -4,7 +4,7 @@ A Python-based geospatial data pipeline integrating parcel, land use, zoning, an
 
 샌프란시스코시 토지이용 자료에서 중심점이 차이나타운 분석 경계 안에 있는 레코드를 골라, 지리 단위별 주택 수를 집계합니다.
 
-[샌프란시스코 차이나타운 필지 999개의 용도지역별 색상 지도와 범례](results/chinatown-zoning.svg)
+![샌프란시스코 차이나타운 필지 999개의 용도지역별 색상 지도와 범례](results/chinatown-zoning.svg)
 
 [개별 필지의 주택 수와 용도지역 살펴보기](results/chinatown_parcels.geojson)
 ### RM-4 주택의 절반 가까이가 3개 필지에 분포합니다
@@ -17,6 +17,12 @@ A Python-based geospatial data pipeline integrating parcel, land use, zoning, an
 샌프란시스코 차이나타운 분석 경계에 중심점이 포함된 tract 113.00의 단일 필지 202개에는 주택 1,826호가 기록돼 있습니다. RM-4는 28필지로 분석 대상 필지의 13.9%를 차지하며, 이곳에 주택 628호(34.4%)가 모여 있습니다. 필지 수가 가장 많은 CRNC는 77필지에 440호입니다. 필지당 평균 주택 수는 RM-4에서 22.4호, CRNC에서 5.7호입니다.
 
 필지 지도(5,864호)와 tract 요약표(5,873호)의 차이는 모두 tract 611.01에서 발생합니다. 이 구역의 여러 필지를 묶은 기록 1건(9호)은 tract 합계에 포함했으며, 개별 필지별 배분을 알 수 없어 단일 필지 지도에서는 제외했습니다.
+
+### 차이나타운 분석 대상 6개 tract의 임차가구 비율
+
+![차이나타운 분석 대상 6개 Census tract의 임차가구 비율을 보여주는 지도와 파란색 범례](results/chinatown-renter-share.svg)
+
+2020–2024년 ACS 추정치 기준, 6개 tract의 임차가구 비율은 80.45%에서 98.62%까지 분포합니다. 각 색은 해당 tract 전체의 거주 가구 중 임차가구가 차지하는 비율을 나타냅니다.
 
 
 ## 첫 실행

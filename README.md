@@ -58,6 +58,6 @@ python3 build_parcel_map.py
 python3 zoning_density.py
 ```
 
-A fresh clone of the analytical release reproduced both summary CSVs byte for byte. A second run retrieved all 999 parcel geometries and matched their published attributes by parcel ID. [Verified analytical revision](https://github.com/gojungle0420-maker/sfchinatown-landuse-housing/commit/13663ae).
+A fresh clone of the analytical release reproduced both summary CSVs byte for byte. [Verified analytical revision](https://github.com/gojungle0420-maker/sfchinatown-landuse-housing/commit/13663ae).
 
 To inspect the styled maps, open [the zoning project](chinatown_zoning.qgz) or [the tenure project](chinatown_renter_share.qgz) in QGIS from a full checkout. The projects use relative paths to the data in this repository.

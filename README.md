@@ -1,7 +1,12 @@
 # sfchinatown-landuse-housing
 A Python-based geospatial data pipeline integrating parcel, land use, zoning, and Census data to analyze housing conditions in San Francisco's Chinatown.
 
+
 샌프란시스코시 토지이용 자료에서 중심점이 차이나타운 분석 경계 안에 있는 레코드를 골라, 지리 단위별 주택 수를 집계합니다.
+
+[샌프란시스코 차이나타운 필지 999개의 용도지역별 색상 지도와 범례](results/chinatown-zoning.svg)
+
+[개별 필지의 주택 수와 용도지역 살펴보기](results/chinatown_parcels.geojson)
 
 ## 첫 실행
 

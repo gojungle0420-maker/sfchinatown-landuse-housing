@@ -72,4 +72,5 @@ function select(id){
 for(const b of document.querySelectorAll('button[data-id]'))b.onclick=()=>select(b.dataset.id);
 for(const p of document.querySelectorAll('path[data-tract]'))p.onclick=()=>select(p.dataset.tract);
 select(rows[0].GEOID);</script></html>"""
-(ROOT / "docs/index.html").write_text(html)
+for target in ("docs/index.html", "results/tract_stock_validation.html"):
+    (ROOT / target).write_text(html, encoding="utf-8")

@@ -56,3 +56,7 @@ These are the 17 values present in the released parcel layer. The names below fo
 1. **Freeze the parcel inputs.** Archive the exact API responses used for the parcel join with retrieval dates, queries and checksums. A subsequent release could then distinguish changes to city data from changes to the code.
 2. **Measure boundary sensitivity.** Compare centroid inclusion with parcel–neighborhood polygon overlap in EPSG:3310. Report how many parcels cross the boundary, their units, and how district density rankings change under a majority-area rule.
 3. **Distinguish existing stock from new production.** Link dated zoning histories and housing completions to stable parcel identifiers. Document lot splits and mergers, then compare additions over common time windows. The present cross-section measures observed stock under recorded designations.
+
+## Housing-stock validation
+
+For the source of every column in the original tract summary, a full-tract centroid aggregation and the comparison with ACS total, occupied and vacant units, see the [housing-stock validation](housing-stock-validation.md).

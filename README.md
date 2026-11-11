@@ -66,8 +66,7 @@ python3 tract_margins.py
 python3 rm4_sensitivity.py
 python3 validate_housing_stock.py
 ```
-
-A fresh clone reproduced the tract and zoning summary CSVs byte for byte. To inspect the styled layers, open either QGIS project from a full checkout. [Verified revision](https://github.com/gojungle0420-maker/sfchinatown-landuse-housing/commit/13663ae) · [Zoning project](chinatown_zoning.qgz) · [Tenure project](chinatown_renter_share.qgz)
+To inspect the styled layers, open either QGIS project from a full checkout. [Verified revision](https://github.com/gojungle0420-maker/sfchinatown-landuse-housing/commit/13663ae) · [Zoning project](chinatown_zoning.qgz) · [Tenure project](chinatown_renter_share.qgz)
 
 ## E. LICENSE
 

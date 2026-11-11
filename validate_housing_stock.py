@@ -1,6 +1,8 @@
 """Compare full-tract SF Planning unit counts with ACS occupancy estimates."""
 import csv
+import gzip
 import json
+import io
 import os
 import shutil
 import subprocess
@@ -11,8 +13,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 INPUT = ROOT / "inputs"
 RESULT = ROOT / "results"
-# Outward-rounded envelope covering the six full TIGER polygons, with padding.
-WEST, EAST, SOUTH, NORTH = -122.414, -122.399, 37.791, 37.804
 GEOIDS = ("06075010701", "06075010702", "06075011300",
           "06075011800", "06075061101", "06075061102")
 
@@ -31,45 +31,67 @@ def main():
     if ogr.startswith("/Applications/QGIS.app/"):
         resources = Path(ogr).parents[1] / "Resources/qgis"
         os.environ.update(GDAL_DATA=str(resources / "gdal"), PROJ_DATA=str(resources / "proj"))
-    candidates = indexed_csv(INPUT / "full_tract_candidates.csv", "ludb_id")
-    features = []
-    for key, r in candidates.items():
-        if not key or r["data_as_of"] != "2026-08-17T00:00:00.000" or int(r["resunits"]) < 0:
-            raise ValueError(f"Invalid inventory record: {key}")
-        point = [float(r["centroid_1"]), float(r["centroid_l"])]
-        features.append(dict(type="Feature", properties={"record_id": key},
-                             geometry=dict(type="Point", coordinates=point)))
+    with gzip.open(INPUT / "city_landuse_20260817.csv.gz", "rt", newline="") as stream:
+        inventory = list(csv.DictReader(stream))
+    by_id = {r["ludb_id"]: r for r in inventory}
+    if not inventory or len(by_id) != len(inventory):
+        raise ValueError("Empty inventory or duplicate record IDs")
+    tracts = json.loads((INPUT / "sf_tracts_2020.geojson").read_text())
     with tempfile.TemporaryDirectory() as directory:
         folder = Path(directory)
         db = folder / "join.gpkg"
+        points = folder / "points.csv"
+        with points.open("w", newline="") as stream:
+            writer = csv.writer(stream, lineterminator="\n")
+            writer.writerow(["record_id", "x", "y"])
+            for key, r in by_id.items():
+                if not key or r["data_as_of"] != "2026-08-17T00:00:00.000" or int(r["resunits"]) < 0:
+                    raise ValueError(f"Invalid inventory record: {key}")
+                writer.writerow([key, float(r["centroid_1"]), float(r["centroid_l"])])
+        subprocess.run([ogr, "-f", "GPKG", db, points, "-oo", "X_POSSIBLE_NAMES=x",
+                        "-oo", "Y_POSSIBLE_NAMES=y", "-a_srs", "EPSG:4326", "-nln", "points"], check=True)
+        subprocess.run([ogr, "-update", db, INPUT / "sf_tracts_2020.geojson",
+                        "-nln", "tracts", "-nlt", "PROMOTE_TO_MULTI"], check=True)
         selected = ",".join(f"'{g}'" for g in GEOIDS)
-        subprocess.run([ogr, "-f", "GPKG", db, f"/vsizip/{INPUT}/tl_2024_06_tract.zip",
+        subprocess.run([ogr, "-update", db, f"/vsizip/{INPUT}/tl_2024_06_tract.zip",
                         "-where", f"GEOID IN ({selected})", "-select", "GEOID", "-t_srs",
-                        "EPSG:4326", "-nln", "tracts", "-nlt", "PROMOTE_TO_MULTI"], check=True)
-        sql = "SELECT GEOID, ST_MinX(geom) AS w, ST_MaxX(geom) AS e, ST_MinY(geom) AS s, ST_MaxY(geom) AS n FROM tracts"
-        def query(sql):
+                        "EPSG:4326", "-nln", "comparison", "-nlt", "PROMOTE_TO_MULTI"], check=True)
+
+        def assignments(layer):
+            sql = f"""SELECT p.record_id, t.GEOID FROM {layer} t
+                      JOIN rtree_points_geom i ON i.maxx >= ST_MinX(t.geom)
+                          AND i.minx <= ST_MaxX(t.geom) AND i.maxy >= ST_MinY(t.geom)
+                          AND i.miny <= ST_MaxY(t.geom)
+                      JOIN points p ON p.fid = i.id WHERE ST_Intersects(p.geom, t.geom)"""
             data = subprocess.check_output([ogr, "-f", "CSV", "/vsistdout/", db,
-                                           "-dialect", "sqlite", "-sql", sql], text=True)
-            return list(csv.DictReader(data.splitlines()))
-        bounds = query(sql)
-        if {r["GEOID"] for r in bounds} != set(GEOIDS) or any(
-            float(r["w"]) < WEST or float(r["e"]) > EAST or float(r["s"]) < SOUTH
-            or float(r["n"]) > NORTH for r in bounds
-        ):
-            raise ValueError("Candidate query does not cover the full study tracts.")
-        points = folder / "points.geojson"
-        points.write_text(json.dumps(dict(type="FeatureCollection", features=features)))
-        subprocess.run([ogr, "-update", db, points, "-nln", "points"], check=True)
-        matches = query("SELECT p.record_id, t.GEOID FROM points p JOIN tracts t ON ST_Intersects(p.geom,t.geom)")
-    counts, units = Counter(), Counter()
-    seen = set()
-    for row in matches:
-        key, tract = row["record_id"], row["GEOID"]
-        if key in seen:
-            raise ValueError(f"Multiple tract assignments: {key}")
-        seen.add(key)
-        counts[tract] += 1
-        units[tract] += int(candidates[key]["resunits"])
+                                            "-dialect", "sqlite", "-sql", sql], text=True)
+            lookup = {}
+            for row in csv.DictReader(io.StringIO(data)):
+                key = row["record_id"]
+                if key in lookup:
+                    raise ValueError(f"Multiple tract assignments in {layer}: {key}")
+                lookup[key] = row["GEOID"]
+            return lookup
+        city = assignments("tracts")
+        vintage_check = assignments("comparison")
+    study = {key: g for key, g in city.items() if g in GEOIDS}
+    if study != vintage_check:
+        raise ValueError("2020 and 2024 study-tract assignments differ. Review boundary changes.")
+    counts = Counter(study.values())
+    units = Counter()
+    for key, g in study.items():
+        units[g] += int(by_id[key]["resunits"])
+    print(f"City records {len(inventory):,}; assigned {len(city):,}; unmatched {len(inventory)-len(city):,}")
+    crosswalk = RESULT / "city_landuse_tract_crosswalk.csv.gz"
+    with crosswalk.with_suffix(".tmp").open("wb") as raw:
+        with gzip.GzipFile(filename="", fileobj=raw, mode="wb", mtime=0) as compressed:
+            with io.TextIOWrapper(compressed, encoding="utf-8", newline="") as stream:
+                writer = csv.writer(stream, lineterminator="\n")
+                writer.writerow(["ludb_id", "GEOID", "resunits"])
+                for key in sorted(by_id):
+                    writer.writerow([key, city.get(key, ""), by_id[key]["resunits"]])
+    crosswalk.with_suffix(".tmp").replace(crosswalk)
+    print(f"Study records {len(study):,}; 2020 and 2024 assignments match by record ID.")
     old = indexed_csv(RESULT / "tract_summary.csv", "GEOID")
     acs = indexed_csv(INPUT / "acs2024_b25002_six_tracts.csv", "GEO_ID")
     if set(old) != set(GEOIDS) or set(acs) != {"1400000US"+g for g in GEOIDS}:
@@ -82,15 +104,28 @@ def main():
             raise ValueError(f"ACS consistency check failed: {g}")
         neighborhood = int(old[g]["chinatown_resunits"])
         output.append([g, neighborhood, counts[g], units[g], units[g]-neighborhood, total,
-                       int(r["B25002_M001"]), occupied, vacant, units[g]-total])
+                       int(r["B25002_M001"]), occupied, vacant, units[g]-total, units[g]-int(old[g]["tract_occupied_units_acs"])])
     target = RESULT / "tract_stock_validation.csv"
     with target.with_suffix(".tmp").open("w", newline="") as stream:
-        writer = csv.writer(stream)
+        writer = csv.writer(stream, lineterminator="\n")
         writer.writerow(["GEOID","chinatown_resunits","full_tract_records","full_tract_resunits",
                          "geography_change_units","acs_total_units","acs_total_moe90","acs_occupied_units",
-                         "acs_vacant_units","landuse_minus_acs_total"])
+                         "acs_vacant_units","landuse_minus_acs_total","landuse_minus_acs_occupied"])
         writer.writerows(output)
     target.with_suffix(".tmp").replace(target)
+    with target.open(newline="") as stream:
+        metrics = {row["GEOID"]: row for row in csv.DictReader(stream)}
+    polygons = []
+    for feature in tracts["features"]:
+        g = feature["properties"]["GEOID"]
+        if g in metrics:
+            feature["properties"].update({k: int(v) for k, v in metrics[g].items() if k != "GEOID"})
+            polygons.append(feature)
+    if len(polygons) != 6 or {p["properties"]["GEOID"] for p in polygons} != set(GEOIDS):
+        raise ValueError("Six distinct study polygons required")
+    map_path = RESULT / "tract_stock_validation.geojson"
+    map_path.write_text(json.dumps({"type": "FeatureCollection", "features": polygons}) + "\n")
+
 
 
 if __name__ == "__main__":

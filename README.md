@@ -6,6 +6,11 @@ This dataset links San Francisco’s August 17, 2026 land-use inventory to parce
 
 The inventory contains **5,873 housing units in 1,000 land-use records**. The parcel map covers 999 single-parcel records with 5,864 units. One record in tract 611.01 groups several parcels and accounts for the remaining nine units. [Parcel map data](results/chinatown_parcels.geojson) · [Tract summary](results/tract_summary.csv)
 
+### Two units of analysis
+
+- **Neighborhood Analysis.** Select land-use centroids inside Chinatown’s Analysis Neighborhood boundary to study parcel zoning and density. [Neighborhood parcel layer](results/chinatown_parcels.geojson)
+- **Census Tract Validation.** Assign the complete city land-use inventory to 2020 tract polygons, then select six full tracts by GEOID. Compare their housing stock with ACS B25002 total units and their occupied units with the B25003 tenure denominator. Each polygon carries the values from both sources. [Six-tract map](results/tract_stock_validation.geojson) · [Comparison table](results/tract_stock_validation.csv) · [Methods and source fields](docs/housing-stock-validation.md)
+
 ## B. HOW THE DATASET IS CREATED
 
 | Stage | Method | Validation |

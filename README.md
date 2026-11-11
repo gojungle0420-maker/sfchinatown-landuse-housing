@@ -9,7 +9,9 @@ The inventory contains **5,873 housing units in 1,000 land-use records**. The pa
 ### Two units of analysis
 
 - **Neighborhood Analysis.** Select land-use centroids inside Chinatown’s Analysis Neighborhood boundary to study parcel zoning and density. [Neighborhood parcel layer](results/chinatown_parcels.geojson)
-- **Census Tract Validation.** Assign the complete city land-use inventory to 2020 tract polygons, then select six full tracts by GEOID. Compare their housing stock with ACS B25002 total units and their occupied units with the B25003 tenure denominator. Each polygon carries the values from both sources. [Six-tract map](results/tract_stock_validation.geojson) · [Comparison table](results/tract_stock_validation.csv) · [Methods and source fields](docs/housing-stock-validation.md)
+- **Census Tract Validation.** Assign the complete city land-use inventory to 2020 tract polygons, then select six full tracts by GEOID. Compare their housing stock with ACS B25002 total units and their occupied units with the B25003 tenure denominator. Each polygon carries the values from both sources. [Open the interactive six-tract map](https://gojungle0420-maker.github.io/sfchinatown-landuse-housing/) · [Comparison table](results/tract_stock_validation.csv) · [Methods and source fields](docs/housing-stock-validation.md)
+
+[![Six-tract comparison of SF Planning and ACS total housing units](results/tract_stock_validation.svg)](https://gojungle0420-maker.github.io/sfchinatown-landuse-housing/)
 
 ## B. HOW THE DATASET IS CREATED
 
@@ -70,6 +72,7 @@ python3 zoning_density.py
 python3 tract_margins.py
 python3 rm4_sensitivity.py
 python3 validate_housing_stock.py
+python3 render_tract_comparison.py
 ```
 To inspect the styled layers, open either QGIS project from a full checkout. [Verified revision](https://github.com/gojungle0420-maker/sfchinatown-landuse-housing/commit/13663ae) · [Zoning project](chinatown_zoning.qgz) · [Tenure project](chinatown_renter_share.qgz)
 
